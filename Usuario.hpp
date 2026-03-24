@@ -10,11 +10,11 @@ class Usuario{
     std::string categoria;
 
     public:
-    Usuario(int id, std::string categoria);
-
-
-
-
+        Usuario(int id, std::string categoria); 
+        static void crearHilos();
+        static void realizarPeticionBusqueda(int id);
+        static void mostrarResultadosBusqueda(int id);
+    
 };
 
 #endif
