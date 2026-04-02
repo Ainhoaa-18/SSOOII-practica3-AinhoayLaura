@@ -4,13 +4,12 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
-#include "Usuario.hpp"
 #include "SistemaBusqueda.hpp"
 
 const int NUM_HILOS = 5; // Número de hilos a crear
 std::vector<std::string> categorias = {"Gratuito","Premium limite saldo","Premium ilimitado"};
 
-void Usuario::crearHilos(){
+void crearHilos(){
     for(int i=0; i<NUM_HILOS; i++){
         int valor = rand() % 3;
         std::string categoria = categorias[valor];
