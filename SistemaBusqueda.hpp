@@ -10,8 +10,9 @@ struct Usuario{
 
 };
 
-
-
+struct Diccionario{
+    std::vector<std::string> palabras;
+};
 
 
 

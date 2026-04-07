@@ -27,6 +27,8 @@ void solicitarRecarga(int idCliente, int& saldo){ //llama cliente a este metodo 
         p.cvCliente.wait(lock,[&]{p.procesada;});
     }
 
+    
+
 }
 
 void sistema(){
