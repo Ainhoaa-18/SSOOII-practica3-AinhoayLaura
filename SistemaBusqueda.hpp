@@ -7,6 +7,7 @@
 struct Usuario{
     int idUsuario;
     std::string categoria; //gratuita / saldo limitado / saldo ilimitado
+    std::string palabraBuscada;
 
 };
 
