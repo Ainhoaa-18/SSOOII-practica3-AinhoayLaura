@@ -3,17 +3,30 @@
 
 #include <iostream>
 #include <string>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include "Usuario.hpp"
 
-struct Usuario{
-    int idUsuario;
-    std::string categoria; //gratuita / saldo limitado / saldo ilimitado
-    std::string palabraBuscada;
 
+struct PeticionBusqueda {
+    Usuario usuario;
+    bool completada = false;
+
+    std::mutex mtx;
+    std::condition_variable cv;
+
+    PeticionBusqueda(Usuario u) : usuario(u) {}
 };
+
+extern std::queue<PeticionBusqueda*> colaBusqueda;
+extern std::mutex mtxCola;
+extern std::condition_variable cvCola;
 
 struct Diccionario{
     std::vector<std::string> palabras;
 };
+
 
 
 

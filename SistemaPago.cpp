@@ -10,21 +10,21 @@ std::string rojo = "\033[31m";
 
 
 void solicitarRecarga(int idCliente, int& saldo){ //llama cliente a este metodo cuando saldo = 0;
-    Peticion p(idCliente, &saldo);
+    Peticion* p = new Peticion(idCliente, &saldo);
 
-    p.cantidadPago = rand() % saldo + 1;
-    p.procesada = false;
+    p->cantidadPago = rand() % saldo + 1;
+    p->procesada = false;
 
     {
         std::lock_guard<std::mutex> lock(semaforo);
-        cola.push(&p);
+        cola.push(p);
         std::cout<<rojo<<"Cliente "<<idCliente<<" solicita recarga de saldo"<<std::endl;
     }
     cvSistema.notify_one();
 
     {
-        std::unique_lock<std::mutex> lock(p.semCliente);
-        p.cvCliente.wait(lock,[&]{p.procesada;});
+        std::unique_lock<std::mutex> lock(p->semCliente);
+        p->cvCliente.wait(lock,[&]{ return p->procesada; });
     }
 
     
