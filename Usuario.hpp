@@ -10,6 +10,7 @@ private:
     std::string categoria;
     std::string palabraBuscada;
     int saldo;
+    int busquedasRestantes = 10;
 
     public:
         Usuario(int id, std::string cat, std::string palabra, int saldo = -1)
@@ -20,6 +21,8 @@ private:
         std::string getPalabra() const { return palabraBuscada; }
         int getSaldo() const {return saldo; }
         void setSaldo(int s) { saldo = s; }
+        int getBusquedasRestantes() const { return busquedasRestantes; }
+        void setBusquedasRestantes(int n) { busquedasRestantes = n; }
 
         static void crearHilos();
         static void realizarPeticionBusqueda(int id);

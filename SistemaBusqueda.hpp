@@ -19,7 +19,8 @@ struct PeticionBusqueda {
     PeticionBusqueda(Usuario u) : usuario(u) {}
 };
 
-extern std::queue<PeticionBusqueda*> colaBusqueda;
+extern std::queue<PeticionBusqueda*> colaPremium;
+extern std::queue<PeticionBusqueda*> colaGratis;
 extern std::mutex mtxCola;
 extern std::condition_variable cvCola;
 

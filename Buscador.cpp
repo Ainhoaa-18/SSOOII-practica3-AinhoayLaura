@@ -17,7 +17,8 @@ std::vector<std::string> categorias = {"Gratuito","Premium limite saldo","Premiu
 std::condition_variable cvSaldo;
 std::mutex mtxSaldo;
 Diccionario d;
-std::queue<PeticionBusqueda*> colaBusqueda;
+std::queue<PeticionBusqueda*> colaPremium;
+std::queue<PeticionBusqueda*> colaGratis;
 std::mutex mtxCola;
 std::condition_variable cvCola;
 
@@ -97,15 +98,27 @@ void atenderPeticiones(){
         //Espero a que haya peticiones
         {
             std::unique_lock<std::mutex> lock(mtxCola);
-            cvCola.wait(lock, []{ return !colaBusqueda.empty(); });
+            cvCola.wait(lock, []{ return !colaGratis.empty(); });
 
-            p = colaBusqueda.front();
-            colaBusqueda.pop();
+            if(!colaPremium.empty()) {
+                p = colaPremium.front();
+                colaPremium.pop();
+            } else {
+                p = colaGratis.front();
+                colaGratis.pop();
+            }
         }
 
         std::string categoria = p->usuario.getCategoria();
 
         if(categoria == "Gratuito"){
+            int restantes = p->usuario.getBusquedasRestantes();
+
+            if(restantes <= 0) {
+                std::cout << "Cliente " << p->usuario.getId() << " sin búsquedas disponibles\n";
+            } else {
+                p->usuario.setBusquedasRestantes(restantes -1);
+            }
             std::cout << "Cliente " << p->usuario.getId() << " (Gratis) realizando búsqueda\n";
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }

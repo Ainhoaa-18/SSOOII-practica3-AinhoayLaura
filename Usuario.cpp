@@ -12,7 +12,11 @@ void funcionCliente(Usuario u){
     //La meto en la cola
     {
         std::lock_guard<std::mutex> lock(mtxCola);
-        colaBusqueda.push(p);
+        if(u.getCategoria() == "Gratuito") {
+            colaGratis.push(p);
+        }else {
+            colaPremium.push(p);
+        }
     }
 
     cvCola.notify_one();
