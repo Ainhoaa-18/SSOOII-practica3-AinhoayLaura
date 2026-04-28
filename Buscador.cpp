@@ -5,10 +5,12 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <atomic>
 #include <condition_variable>
 #include "SistemaBusqueda.hpp"
 #include "SistemaPago.hpp"
 #include "Usuario.hpp"
+#include "BusquedaArchivos.hpp"
 
 #define NUM_MAX_PALABRAS_GRATUITO 10
 
@@ -21,6 +23,19 @@ std::queue<PeticionBusqueda*> colaPremium;
 std::queue<PeticionBusqueda*> colaGratis;
 std::mutex mtxCola;
 std::condition_variable cvCola;
+std::vector<std::string> libros {
+    "lib/17 LEYES DEL TRABAJO EN EQUIPO.txt",
+    "lib/21 LEYES DEL LIDERAZGO - JOHN C. MAXWELL.txt",
+    "lib/25 MANERAS DE GANARSE A LA GENTE - .txt",
+    "lib/Abe Shana - La última sirena.txt",
+    "lib/ACTITUD DE VENCEDOR - JOHN C. MAXWELL.txt",
+    "lib/El Oro Y La Ceniza - Abecassis Eliette .txt",
+    "lib/SEAMOS PERSONAS DE INFLUENCIA - JOHN MAXWELL.txt",
+    "lib/VIVE TU SUEÑO - JOHN MAXWELL.txt"
+};
+std::atomic<int> clientesAtendidos(0);
+bool terminado = false;
+
 
 void crearDiccionario(){
     d.palabras = {"amor","castillo","sirena","trabajo","casa","gente","corazón","mundo","vida","bien"};
@@ -65,24 +80,6 @@ void crearUsuarios(){
     
 }
 
-void comprobarCategoria(std::string categoria){
-    if(categoria == "Gratuito"){
-        
-    }else if(categoria == "Premium limite saldo"){
-        
-    }else if(categoria == "Premium ilimitado"){
-        
-    }
-}
-
-void realizarBusquedaGratis(){
-    
-}
-
-void realizarBusquedaPremiumLimiteSaldo(){
-    
-}
-
 void comprobarSaldo(Usuario u, int saldo){
     std::unique_lock<std::mutex> lock(mtxSaldo);
     cvSaldo.wait(lock, [&]{return saldo<=0;});
@@ -98,8 +95,11 @@ void atenderPeticiones(){
         //Espero a que haya peticiones
         {
             std::unique_lock<std::mutex> lock(mtxCola);
-            cvCola.wait(lock, []{ return !colaGratis.empty(); });
-
+            cvCola.wait(lock, []{ return terminado || !colaGratis.empty() || !colaPremium.empty(); });
+            
+            if(terminado && colaGratis.empty() && colaPremium.empty()){
+                return; 
+            }
             if(!colaPremium.empty()) {
                 p = colaPremium.front();
                 colaPremium.pop();
@@ -120,7 +120,13 @@ void atenderPeticiones(){
                 p->usuario.setBusquedasRestantes(restantes -1);
             }
             std::cout << "Cliente " << p->usuario.getId() << " (Gratis) realizando búsqueda\n";
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            int totalEncontradas = 0;
+
+            for(const auto& libro : libros) {
+                totalEncontradas += buscarEnArchivo(libro, p->usuario.getPalabra());
+            }
+
+            std::cout << "Cliente " << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
         }
         else if(categoria == "Premium limite saldo"){
             int saldo = p->usuario.getSaldo();
@@ -130,17 +136,35 @@ void atenderPeticiones(){
             if(saldo <= 0){
                 std::cout << "Cliente " << p->usuario.getId() << " sin saldo, recargando...\n";
 
-                solicitarRecarga(p->usuario.getId(), saldo);
-                p->usuario.setSaldo(saldo);
+                int saldo = p->usuario.getSaldo();
+
+                if(saldo <= 0){
+                    solicitarRecarga(p->usuario.getId(), saldo);
+                    p->usuario.setSaldo(saldo);
+                }
             }
 
             saldo--;
             p->usuario.setSaldo(saldo);
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            int totalEncontradas = 0;
+
+            for(const auto& libro : libros) {
+                totalEncontradas += buscarEnArchivo(libro, p->usuario.getPalabra());
+            }
+
+            std::cout << "El cliente Premium " << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
+
         }
         else{ // Premium ilimitado
             std::cout << "Cliente " << p->usuario.getId() << " (Premium ilimitado)\n";
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            int totalEncontradas = 0;
+
+            for(const auto& libro : libros) {
+                totalEncontradas += buscarEnArchivo(libro, p->usuario.getPalabra());
+            }
+
+            std::cout << "El cliente Premium ilimitado" << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
+
         }
 
         {
@@ -150,6 +174,14 @@ void atenderPeticiones(){
 
         //Notifico al cliente
         p->cv.notify_one();
+        delete p;
+        clientesAtendidos++;
+
+        if(clientesAtendidos == NUM_HILOS){
+            std::lock_guard<std::mutex> lock(mtxCola);
+            terminado = true;
+            cvCola.notify_all(); 
+        }
     }
 }
 
@@ -167,11 +199,11 @@ int main() {
         servidores.emplace_back(atenderPeticiones);
     }
 
-    for(auto &s : servidores){
-        s.detach();
-    }
-
     crearUsuarios();
+
+    for(auto &s : servidores){
+        s.join();
+    }
 
     return 0;
 }
