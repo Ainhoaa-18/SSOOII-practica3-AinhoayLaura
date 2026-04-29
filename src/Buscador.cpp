@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include "SistemaBusqueda.hpp"
 #include "SistemaPago.hpp"
@@ -13,6 +14,12 @@
 #include "BusquedaArchivos.hpp"
 
 #define NUM_MAX_PALABRAS_GRATUITO 10
+std::string verde = "\033[32m";
+std::string rojo = "\033[31m";
+std::string azul = "\033[34m";
+std::string amarillo = "\033[33m";
+std::string rosa = "\033[35m";
+
 
 const int NUM_HILOS = 50; // Número de hilos a crear
 std::vector<std::string> categorias = {"Gratuito","Premium limite saldo","Premium ilimitado"};
@@ -52,7 +59,7 @@ void crearUsuarios(){
             case 0: {
                 //gratuito
                 Usuario u(i, categorias[valor], palabra);
-                std::cout<<"Usuario "<<u.getId()<<" creado con categoria "<<u.getCategoria()<<std::endl;
+                std::cout<<verde<<"Usuario "<<u.getId()<<" creado con categoria "<<u.getCategoria()<<std::endl;
                 hilos.emplace_back(funcionCliente, u);
                 break;
             }
@@ -60,18 +67,18 @@ void crearUsuarios(){
                 //premium limite saldo
                 int saldo = 1 + rand() % 50;
                 Usuario u(i, categorias[valor], palabra, saldo);
-                std::cout<<"Usuario "<<u.getId()<<" creado con categoria "<<u.getCategoria()<<" y saldo "<<saldo<<std::endl;
+                std::cout<<verde<<"Usuario "<<u.getId()<<" creado con categoria "<<u.getCategoria()<<" y saldo "<<saldo<<std::endl;
                 hilos.emplace_back(funcionCliente, u);
                 break;
             } 
             case 2: {//premium ilimitado
                 Usuario u(i, categorias[valor], palabra);
-                std::cout<<"Usuario "<<u.getId()<<" creado con categoria "<<u.getCategoria()<<std::endl;
+                std::cout<<verde<<"Usuario "<<u.getId()<<" creado con categoria "<<u.getCategoria()<<std::endl;
                 hilos.emplace_back(funcionCliente, u);
                 break;
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simula el tiempo de creación del hilo
+        std::this_thread::sleep_for(std::chrono::milliseconds(3000)); // Simula el tiempo de creación del hilo
 
     }
     for(auto &h : hilos){
@@ -115,26 +122,26 @@ void atenderPeticiones(){
             int restantes = p->usuario.getBusquedasRestantes();
 
             if(restantes <= 0) {
-                std::cout << "Cliente " << p->usuario.getId() << " sin búsquedas disponibles\n";
+                std::cout <<rojo<< "Cliente " << p->usuario.getId() << " sin búsquedas disponibles\n";
             } else {
                 p->usuario.setBusquedasRestantes(restantes -1);
             }
-            std::cout << "Cliente " << p->usuario.getId() << " (Gratis) realizando búsqueda\n";
+            std::cout <<azul<< "Cliente " << p->usuario.getId() << " (Gratis) realizando búsqueda\n";
             int totalEncontradas = 0;
 
             for(const auto& libro : libros) {
                 totalEncontradas += buscarEnArchivo(libro, p->usuario.getPalabra());
             }
 
-            std::cout << "Cliente " << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
+            std::cout <<amarillo<< "Cliente " << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
         }
         else if(categoria == "Premium limite saldo"){
             int saldo = p->usuario.getSaldo();
 
-            std::cout << "Cliente " << p->usuario.getId() << " (Premium saldo: " << saldo << ")\n";
+            std::cout <<rosa<< "Cliente " << p->usuario.getId() << " (Premium saldo: " << saldo << ")\n";
 
             if(saldo <= 0){
-                std::cout << "Cliente " << p->usuario.getId() << " sin saldo, recargando...\n";
+                std::cout <<rojo<< "Cliente " << p->usuario.getId() << " sin saldo, recargando...\n";
 
                 int saldo = p->usuario.getSaldo();
 
@@ -152,18 +159,18 @@ void atenderPeticiones(){
                 totalEncontradas += buscarEnArchivo(libro, p->usuario.getPalabra());
             }
 
-            std::cout << "El cliente Premium " << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
+            std::cout <<amarillo<< "El cliente Premium " << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
 
         }
         else{ // Premium ilimitado
-            std::cout << "Cliente " << p->usuario.getId() << " (Premium ilimitado)\n";
+            std::cout <<rosa<< "Cliente " << p->usuario.getId() << " (Premium ilimitado)\n";
             int totalEncontradas = 0;
 
             for(const auto& libro : libros) {
                 totalEncontradas += buscarEnArchivo(libro, p->usuario.getPalabra());
             }
 
-            std::cout << "El cliente Premium ilimitado" << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
+            std::cout <<amarillo<< "El cliente Premium ilimitado" << p->usuario.getId() << " encontró " << totalEncontradas << " palabras de '" << p->usuario.getPalabra() << "'\n";
 
         }
 

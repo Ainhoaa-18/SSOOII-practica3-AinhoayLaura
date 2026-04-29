@@ -8,6 +8,11 @@
 #include <condition_variable>
 #include "Usuario.hpp"
 
+extern std::string verde;
+extern std::string rojo;
+extern std::string azul;
+extern std::string amarillo;
+extern std::string rosa;
 
 struct PeticionBusqueda {
     Usuario usuario;

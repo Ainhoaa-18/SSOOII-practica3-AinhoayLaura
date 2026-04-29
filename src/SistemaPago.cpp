@@ -1,12 +1,10 @@
 #include "SistemaPago.hpp"
+#include "SistemaBusqueda.hpp"
 #include <iostream>
 
 std::mutex semaforo;
 std::condition_variable cvSistema;
 std::queue<Peticion*> cola;
-
-std::string verde = "\033[32m";
-std::string rojo = "\033[31m";
 
 
 void solicitarRecarga(int idCliente, int& saldo){ //llama cliente a este metodo cuando saldo = 0;
